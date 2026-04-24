@@ -24,7 +24,7 @@ L'aplicació és una **web app** accessible des del navegador del mòbil. No és
 |---|---|---|---|
 | Interfície (frontend) | Streamlit | última estable | Gratuït |
 | Base de dades | Supabase (PostgreSQL) | Free tier | Gratuït |
-| Autenticació | Supabase Auth (OAuth GitHub) | — | Gratuït |
+| Autenticació | Supabase Auth (magic link per email) | — | Gratuït |
 | Desplegament | Streamlit Cloud | Community | Gratuït |
 | Repositori de codi | GitHub (`orfeu65/lanostraclau`) | — | Gratuït |
 
@@ -32,10 +32,10 @@ L'aplicació és una **web app** accessible des del navegador del mòbil. No és
 
 ## 3. Autenticació
 
-- Els usuaris s'autentiquen amb el seu **compte de GitHub** via OAuth.
+- Els usuaris s'autentiquen mitjançant **magic link per email** (Supabase Auth).
+- L'usuari introdueix el seu email i rep un enllaç d'accés directe, sense contrasenya.
+- No cal cap compte extern (GitHub, Google, etc.).
 - Supabase gestiona el flux d'autenticació i els tokens de sessió.
-- En el futur es pot afegir Google com a proveïdor alternatiu.
-- No es gestionen contrasenyes pròpies a l'aplicació.
 
 ---
 
@@ -178,8 +178,8 @@ A Streamlit Cloud es configuren a la secció **Secrets** del projecte.
 |---|---|---|
 | 1 | Definició de requisits | ✅ Fet |
 | 2 | Documentació (requisits + arquitectura) | ✅ Fet |
-| 3 | Creació de taules a Supabase | Pendent |
-| 4 | Configuració autenticació GitHub | En curs |
+| 3 | Creació de taules a Supabase | ✅ Fet |
+| 4 | Configuració autenticació magic link | ✅ Fet |
 | 5 | Desenvolupament mòdul per mòdul | Pendent |
 | 6 | Proves i ajustos | Pendent |
 | 7 | Desplegament a Streamlit Cloud | Pendent |

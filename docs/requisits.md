@@ -121,6 +121,7 @@ Pàgina estàtica amb recursos i informació d'interès.
 | Llista de sortida | Una per estada, comentari general únic | Suficient per a les necessitats actuals |
 | Tasques completades | Es guarden amb historial | Millor traçabilitat |
 | Comptabilitat | Es manté a Google Drive | L'app només ofereix accés ràpid |
+| Autenticació | Magic link per email | Accessible per a tots els membres de les famílies, sense comptes externs ni contrasenyes |
 | Idioma | Català (tot: UI, codi, comentaris, docs) | Decisió de les propietàries |
 
 ---

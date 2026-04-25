@@ -33,6 +33,10 @@ cp .env.example .env
 streamlit run app.py
 ```
 
+## App
+
+[lanostraclau.streamlit.app](https://lanostraclau.streamlit.app)
+
 ## Documentació
 
 - [`docs/requisits.md`](docs/requisits.md) — requisits del projecte

@@ -12,6 +12,7 @@ _SUBMINISTRES = [
     ("Gas",             "Naturgy",     "912 100 100", "https://clientes.naturgy.es/"),
     ("Llum",            "Energia XXI", "800 760 333", "https://www.energiaxxi.com/"),
     ("Wi-Fi",           "Vinga",       "872 200 700", "https://www.vingafibra.com/ca"),
+    ("Comunitat de propietaris", "—", "—",          None),
     ("Assegurança",     "AXA",         "91 807 00 55", "https://www.axa.es"),
     ("Avaries caldera", "Junker",      "972 902 582", None),
     ("Manteniment A/C", "—",           "—",           None),

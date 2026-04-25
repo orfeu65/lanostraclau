@@ -76,7 +76,8 @@ FROM (VALUES
     ('Júlia',    'juliaperpinyaramell@gmail.com',         'Família Cristina', 'false'),
     ('Elisa',    'elisa121@martinezprocuradora.com',      'Família Elisa',    'false'),
     ('Alba',     'albamm121@gmail.com',                   'Família Elisa',    'false'),
-    ('Francesc', 'francescmorama@gmail.com',              'Família Francesc', 'false')
+    ('Francesc', 'francescmorama@gmail.com',              'Família Francesc', 'false'),
+    ('Irina',    'nina.irina.2004@gmail.com',             'Família Francesc', 'false')
 ) AS u(nom, email, familia_nom, es_admin)
 JOIN auth.users au ON au.email = u.email
 JOIN families f    ON f.nom    = u.familia_nom

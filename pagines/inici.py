@@ -17,6 +17,16 @@ def mostrar(supabase) -> None:
         if st.button("Sortir", use_container_width=True):
             tancar_sessio(supabase)
 
+    col_wa, _ = st.columns([3, 1])
+    with col_wa:
+        st.markdown(
+            '<a href="https://chat.whatsapp.com/DK42sglSJfn2V8s2WRRx2p?mode=gi_t" target="_blank">'
+            '<img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" '
+            'width="20" style="vertical-align:middle; margin-right:6px;">'
+            'Parlem de Palamós</a>',
+            unsafe_allow_html=True,
+        )
+
     st.divider()
 
     _mostrar_estat_pis(supabase, avui)
@@ -88,12 +98,12 @@ def _mostrar_propera_estada(supabase, avui: str, usuari) -> None:
             .execute()
         )
 
-        st.subheader("La teva propera estada")
+        st.subheader("📅 La teva propera estada")
         if res.data:
             estada = res.data[0]
             responsable = estada.get("usuaris") or {}
             st.markdown(
-                f"📅 **{_formata_data(estada['data_inici'])}** — "
+                f"**{_formata_data(estada['data_inici'])}** — "
                 f"**{_formata_data(estada['data_fi'])}**  \n"
                 f"Responsable: {responsable.get('nom', '—')}"
             )

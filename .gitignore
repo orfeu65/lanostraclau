@@ -2,6 +2,9 @@
 .env
 .env.local
 
+# Dades reals (emails, noms) — usa db/dades.example.sql com a plantilla
+db/dades.sql
+
 # Python
 __pycache__/
 *.pyc

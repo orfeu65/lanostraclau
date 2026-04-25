@@ -17,8 +17,12 @@ st.set_page_config(
 # Connexió a Supabase
 @st.cache_resource
 def init_supabase():
-    url = st.secrets.get("SUPABASE_URL") or os.environ.get("SUPABASE_URL")
-    key = st.secrets.get("SUPABASE_KEY") or os.environ.get("SUPABASE_KEY")
+    try:
+        url = st.secrets["SUPABASE_URL"]
+        key = st.secrets["SUPABASE_KEY"]
+    except Exception:
+        url = os.environ.get("SUPABASE_URL")
+        key = os.environ.get("SUPABASE_KEY")
     if not url or not key:
         st.error("Falten les credencials de Supabase. Comprova les variables d'entorn.")
         st.stop()

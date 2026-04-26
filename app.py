@@ -76,8 +76,11 @@ st.sidebar.caption("del pis de Palamós")
 
 usuari = obtenir_usuari_actual()
 email  = usuari.email if hasattr(usuari, "email") else (usuari or {}).get("email")
-res_admin = supabase.table("usuaris").select("es_admin").eq("email", email).maybe_single().execute()
-es_admin  = bool(res_admin.data and res_admin.data.get("es_admin"))
+try:
+    res_admin = supabase.table("usuaris").select("es_admin").eq("email", email).maybe_single().execute()
+    es_admin  = bool(res_admin.data and res_admin.data.get("es_admin"))
+except Exception:
+    es_admin = False
 
 pagines = {
     "Inici":             "pagines.inici",

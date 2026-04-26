@@ -8,6 +8,22 @@
 
 
 -- -------------------------------------------------------------
+-- 0. FUNCIÓ D'ADMIN (SECURITY DEFINER per evitar recursivitat RLS)
+-- -------------------------------------------------------------
+
+CREATE OR REPLACE FUNCTION is_admin()
+RETURNS boolean
+LANGUAGE sql
+SECURITY DEFINER
+STABLE
+AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM usuaris WHERE id = auth.uid() AND es_admin = true
+  );
+$$;
+
+
+-- -------------------------------------------------------------
 -- 1. TAULES
 -- -------------------------------------------------------------
 
@@ -181,14 +197,14 @@ CREATE POLICY "usuaris poden modificar les seves estades"
     ON estades FOR UPDATE TO authenticated
     USING (
         auth.uid() = creada_per
-        OR EXISTS (SELECT 1 FROM usuaris WHERE id = auth.uid() AND es_admin = true)
+        OR is_admin()
     );
 
 CREATE POLICY "usuaris poden eliminar les seves estades"
     ON estades FOR DELETE TO authenticated
     USING (
         auth.uid() = creada_per
-        OR EXISTS (SELECT 1 FROM usuaris WHERE id = auth.uid() AND es_admin = true)
+        OR is_admin()
     );
 
 -- Checklist: qualsevol usuari autenticat pot escriure
@@ -212,18 +228,18 @@ DROP POLICY IF EXISTS "admins poden gestionar checklist_items" ON checklist_item
 
 CREATE POLICY "admins poden gestionar families"
     ON families FOR ALL TO authenticated
-    USING (EXISTS (SELECT 1 FROM usuaris WHERE id = auth.uid() AND es_admin = true))
-    WITH CHECK (EXISTS (SELECT 1 FROM usuaris WHERE id = auth.uid() AND es_admin = true));
+    USING (is_admin())
+    WITH CHECK (is_admin());
 
 CREATE POLICY "admins poden gestionar usuaris"
     ON usuaris FOR ALL TO authenticated
-    USING (EXISTS (SELECT 1 FROM usuaris WHERE id = auth.uid() AND es_admin = true))
-    WITH CHECK (EXISTS (SELECT 1 FROM usuaris WHERE id = auth.uid() AND es_admin = true));
+    USING (is_admin())
+    WITH CHECK (is_admin());
 
 CREATE POLICY "admins poden gestionar checklist_items"
     ON checklist_items FOR ALL TO authenticated
-    USING (EXISTS (SELECT 1 FROM usuaris WHERE id = auth.uid() AND es_admin = true))
-    WITH CHECK (EXISTS (SELECT 1 FROM usuaris WHERE id = auth.uid() AND es_admin = true));
+    USING (is_admin())
+    WITH CHECK (is_admin());
 
 -- Recursos, subministres, acords: només l'administradora pot escriure
 DROP POLICY IF EXISTS "admins poden gestionar recursos"     ON recursos;
@@ -232,18 +248,18 @@ DROP POLICY IF EXISTS "admins poden gestionar acords"       ON acords;
 
 CREATE POLICY "admins poden gestionar recursos"
     ON recursos FOR ALL TO authenticated
-    USING (EXISTS (SELECT 1 FROM usuaris WHERE id = auth.uid() AND es_admin = true))
-    WITH CHECK (EXISTS (SELECT 1 FROM usuaris WHERE id = auth.uid() AND es_admin = true));
+    USING (is_admin())
+    WITH CHECK (is_admin());
 
 CREATE POLICY "admins poden gestionar subministres"
     ON subministres FOR ALL TO authenticated
-    USING (EXISTS (SELECT 1 FROM usuaris WHERE id = auth.uid() AND es_admin = true))
-    WITH CHECK (EXISTS (SELECT 1 FROM usuaris WHERE id = auth.uid() AND es_admin = true));
+    USING (is_admin())
+    WITH CHECK (is_admin());
 
 CREATE POLICY "admins poden gestionar acords"
     ON acords FOR ALL TO authenticated
-    USING (EXISTS (SELECT 1 FROM usuaris WHERE id = auth.uid() AND es_admin = true))
-    WITH CHECK (EXISTS (SELECT 1 FROM usuaris WHERE id = auth.uid() AND es_admin = true));
+    USING (is_admin())
+    WITH CHECK (is_admin());
 
 -- Avisos: qualsevol usuari autenticat pot inserir o modificar
 DROP POLICY IF EXISTS "usuaris poden inserir avisos"   ON avisos;

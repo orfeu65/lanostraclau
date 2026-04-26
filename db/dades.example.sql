@@ -25,16 +25,37 @@ WHERE NOT EXISTS (SELECT 1 FROM families);
 
 
 -- -------------------------------------------------------------
+-- Seccions de la llista de sortida
+-- -------------------------------------------------------------
+
+INSERT INTO seccions_checklist (nom, icona, ordre)
+SELECT nom, icona, ordre FROM (VALUES
+    ('El mateix dia de la sortida', '🧹', 0),
+    ('Just abans de sortir',        '👋', 1)
+) AS d(nom, icona, ordre)
+WHERE NOT EXISTS (SELECT 1 FROM seccions_checklist);
+
+
+-- -------------------------------------------------------------
 -- Ítems de la llista de sortida
 -- -------------------------------------------------------------
 
-INSERT INTO checklist_items (seccio, descripcio, es_opcional, ordre)
-SELECT seccio, descripcio, es_opcional, ordre FROM (VALUES
+INSERT INTO checklist_items (seccio_id, seccio, descripcio, es_opcional, ordre)
+SELECT s.id, d.seccio, d.descripcio, d.es_opcional, d.ordre
+FROM (VALUES
     ('El mateix dia de la sortida', 'Exemple ítem 1', false, 10),
     ('El mateix dia de la sortida', 'Exemple ítem 2', false, 20),
     ('Just abans de sortir',        'Exemple ítem 3', false, 30)
-) AS t(seccio, descripcio, es_opcional, ordre)
+) AS d(seccio, descripcio, es_opcional, ordre)
+JOIN seccions_checklist s ON s.nom = d.seccio
 WHERE NOT EXISTS (SELECT 1 FROM checklist_items);
+
+-- Migració: actualitzar seccio_id als ítems existents que no en tinguin
+UPDATE checklist_items ci
+SET seccio_id = sc.id
+FROM seccions_checklist sc
+WHERE ci.seccio = sc.nom
+  AND ci.seccio_id IS NULL;
 
 
 -- -------------------------------------------------------------

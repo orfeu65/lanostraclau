@@ -23,22 +23,21 @@ def mostrar(supabase) -> None:
     # --- Subministres ---
     if subministres:
         st.subheader("📞 Subministres i telèfons d'interès")
-        cap1, cap2, cap3 = st.columns([2, 2, 2])
+        cap1, cap2, cap3, cap4 = st.columns([2, 2, 2, 2])
         cap1.markdown("**Servei**")
         cap2.markdown("**Empresa**")
         cap3.markdown("**Telèfon**")
+        cap4.markdown("**Notes**")
         for s in subministres:
-            c1, c2, c3 = st.columns([2, 2, 2])
-            nom = s["nom"]
-            if s.get("notes"):
-                nom += f"  \n_{s['notes']}_"
-            c1.markdown(nom)
+            c1, c2, c3, c4 = st.columns([2, 2, 2, 2])
+            c1.markdown(s["nom"])
             empresa = s.get("empresa") or "—"
             if s.get("url"):
                 c2.markdown(f"[{empresa}]({s['url']})")
             else:
                 c2.markdown(empresa)
             c3.markdown(f"`{s.get('telefon') or '—'}`")
+            c4.markdown(s.get("notes") or "")
         st.divider()
 
     # --- Acords ---

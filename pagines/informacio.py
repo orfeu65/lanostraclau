@@ -1,14 +1,15 @@
 """Pàgina d'informació útil — dades llegides des de Supabase."""
 import streamlit as st
 from pathlib import Path
+from html import escape
 
 
 def mostrar(supabase) -> None:
     st.title("ℹ️ Informació útil")
 
-    recursos    = _obtenir(supabase, "recursos",    "ordre")
+    recursos     = _obtenir(supabase, "recursos",     "ordre")
     subministres = _obtenir(supabase, "subministres", "ordre")
-    acords      = _obtenir(supabase, "acords",      "ordre")
+    acords       = _obtenir(supabase, "acords",       "ordre")
 
     drive     = [r for r in recursos if r["categoria"] == "drive"]
     transport = [r for r in recursos if r["categoria"] == "transport"]
@@ -23,21 +24,7 @@ def mostrar(supabase) -> None:
     # --- Subministres ---
     if subministres:
         st.subheader("📞 Subministres i telèfons d'interès")
-        cap1, cap2, cap3, cap4 = st.columns([2, 2, 2, 2])
-        cap1.markdown("**Servei**")
-        cap2.markdown("**Empresa**")
-        cap3.markdown("**Telèfon**")
-        cap4.markdown("**Notes**")
-        for s in subministres:
-            c1, c2, c3, c4 = st.columns([2, 2, 2, 2])
-            c1.markdown(s["nom"])
-            empresa = s.get("empresa") or "—"
-            if s.get("url"):
-                c2.markdown(f"[{empresa}]({s['url']})")
-            else:
-                c2.markdown(empresa)
-            c3.markdown(f"`{s.get('telefon') or '—'}`")
-            c4.markdown(s.get("notes") or "")
+        st.markdown(_html_subministres(subministres), unsafe_allow_html=True)
         st.divider()
 
     # --- Acords ---
@@ -62,6 +49,74 @@ def mostrar(supabase) -> None:
                 file_name="sarfa_horaris.pdf",
                 mime="application/pdf",
             )
+
+
+def _html_subministres(subministres: list) -> str:
+    """Taula al web, expanders al mòbil (CSS media query, sense JS)."""
+
+    # --- Taula (pantalla ampla) ---
+    files = ""
+    for s in subministres:
+        nom     = escape(s["nom"])
+        empresa = escape(s.get("empresa") or "—")
+        telefon = escape(s.get("telefon") or "—")
+        notes   = escape(s.get("notes") or "")
+        url     = s.get("url") or ""
+        empresa_html = f'<a href="{escape(url)}">{empresa}</a>' if url else empresa
+        files += (
+            f"<tr>"
+            f"<td>{nom}</td>"
+            f"<td>{empresa_html}</td>"
+            f"<td><code>{telefon}</code></td>"
+            f"<td>{notes}</td>"
+            f"</tr>"
+        )
+
+    taula = f"""
+    <table class="sub-taula">
+      <thead>
+        <tr>
+          <th>Servei</th><th>Empresa</th><th>Telèfon</th><th>Notes</th>
+        </tr>
+      </thead>
+      <tbody>{files}</tbody>
+    </table>"""
+
+    # --- Expanders (pantalla estreta) ---
+    cards = '<div class="sub-cards">'
+    for s in subministres:
+        nom     = escape(s["nom"])
+        empresa = escape(s.get("empresa") or "—")
+        telefon = escape(s.get("telefon") or "—")
+        notes   = escape(s.get("notes") or "")
+        url     = s.get("url") or ""
+        empresa_html = f'<a href="{escape(url)}">{empresa}</a>' if url else empresa
+        notes_html   = f'<p><em>{notes}</em></p>' if notes else ""
+        cards += f"""
+        <details>
+          <summary>{nom}</summary>
+          <p>{empresa_html} · <code>{telefon}</code></p>
+          {notes_html}
+        </details>"""
+    cards += "</div>"
+
+    css = """
+    <style>
+      .sub-taula { width:100%; border-collapse:collapse; font-size:0.9em; }
+      .sub-taula th { text-align:left; border-bottom:2px solid #555; padding:4px 8px; }
+      .sub-taula td { padding:4px 8px; border-bottom:1px solid #333; vertical-align:top; }
+      .sub-cards { display:none; }
+      .sub-cards details { border:1px solid #444; border-radius:6px;
+                           margin-bottom:6px; padding:6px 10px; }
+      .sub-cards summary { font-weight:600; cursor:pointer; }
+      .sub-cards p { margin:4px 0; font-size:0.9em; }
+      @media (max-width: 600px) {
+        .sub-taula { display:none; }
+        .sub-cards { display:block; }
+      }
+    </style>"""
+
+    return css + taula + cards
 
 
 def _obtenir(supabase, taula: str, ordre: str) -> list:

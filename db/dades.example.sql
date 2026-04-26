@@ -65,3 +65,40 @@ FROM (VALUES
 JOIN auth.users au ON au.email = u.email
 JOIN families f    ON f.nom    = u.familia_nom
 WHERE NOT EXISTS (SELECT 1 FROM usuaris WHERE usuaris.email = u.email);
+
+
+-- -------------------------------------------------------------
+-- Recursos (Drive i transport)
+-- -------------------------------------------------------------
+
+INSERT INTO recursos (titol, url, categoria, ordre)
+SELECT titol, url, categoria, ordre FROM (VALUES
+    ('Carpeta compartida', 'https://drive.google.com/...', 'drive', 0),
+    ('Exemple transport',  'https://exemple.com',          'transport', 0)
+) AS d(titol, url, categoria, ordre)
+WHERE NOT EXISTS (SELECT 1 FROM recursos);
+
+
+-- -------------------------------------------------------------
+-- Subministres
+-- -------------------------------------------------------------
+
+INSERT INTO subministres (nom, empresa, telefon, url, notes, ordre)
+SELECT nom, empresa, telefon, url, notes, ordre FROM (VALUES
+    ('Aigua',       'Empresa A', '900 000 000', NULL,                   NULL, 0),
+    ('Gas',         'Empresa B', '900 000 001', 'https://exemple.com',  NULL, 1),
+    ('Llum',        'Empresa C', '900 000 002', 'https://exemple.com',  NULL, 2)
+) AS d(nom, empresa, telefon, url, notes, ordre)
+WHERE NOT EXISTS (SELECT 1 FROM subministres);
+
+
+-- -------------------------------------------------------------
+-- Acords entre famílies
+-- -------------------------------------------------------------
+
+INSERT INTO acords (titol, text, ordre)
+SELECT titol, text, ordre FROM (VALUES
+    ('Família A', 'Descripció de l''acord de la família A', 0),
+    ('Família B', 'Descripció de l''acord de la família B', 1)
+) AS d(titol, text, ordre)
+WHERE NOT EXISTS (SELECT 1 FROM acords);

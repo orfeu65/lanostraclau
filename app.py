@@ -68,6 +68,7 @@ if not obtenir_usuari_actual():
 sessio = st.session_state.get("sessio")
 if sessio:
     supabase.auth.set_session(sessio.access_token, sessio.refresh_token)
+    supabase.postgrest.auth(sessio.access_token)
 
 # --- App principal (usuari autenticat) ---
 st.sidebar.title("⚓🔑 La Nostra Clau")

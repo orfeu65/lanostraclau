@@ -81,7 +81,8 @@ def _llista_tasques_pendents(supabase, usuari_id: Optional[str]) -> None:
 
 def _historial_tasques_completades(supabase) -> None:
     """Mostra l'historial de tasques completades."""
-    with st.expander("🎉 Fetes"):
+    st.subheader("🎉 Fetes")
+    with st.expander("Historial de tasques completades"):
         try:
             res = (
                 supabase.table("tasques")

@@ -1,8 +1,8 @@
 # La Nostra Clau — Document d'Arquitectura
 
-**Versió:** 1.0  
-**Data:** Abril 2025  
-**Estat:** Esborrany inicial  
+**Versió:** 1.1  
+**Data:** Abril 2026  
+**Estat:** Aplicació en producció  
 
 ---
 
@@ -36,6 +36,7 @@ L'aplicació és una **web app** accessible des del navegador del mòbil. No és
 - L'usuari introdueix el seu email i rep un enllaç d'accés directe, sense contrasenya.
 - No cal cap compte extern (GitHub, Google, etc.).
 - Supabase gestiona el flux d'autenticació i els tokens de sessió.
+- A cada rerun de Streamlit, la sessió es restaura al client Supabase per garantir que les polítiques RLS s'apliquen correctament.
 
 ---
 
@@ -67,6 +68,7 @@ L'aplicació és una **web app** accessible des del navegador del mòbil. No és
 | data_inici | date | Primer dia de l'estada |
 | data_fi | date | Darrer dia de l'estada |
 | comentari | text | Qui hi va, convidats, notes |
+| comentari_sortida | text | Comentari deixat en fer la llista de sortida |
 | creada_per | uuid | Referència a `usuaris` |
 | creada_quan | timestamptz | Data i hora de creació |
 | modificada_quan | timestamptz | Data i hora de darrera modificació |
@@ -87,7 +89,6 @@ L'aplicació és una **web app** accessible des del navegador del mòbil. No és
 | estada_id | uuid | Referència a `estades` |
 | item_id | uuid | Referència a `checklist_items` |
 | fet | boolean | Si s'ha marcat com a fet |
-| comentari_general | text | Comentari únic per a tota la llista d'aquesta estada |
 | completada_per | uuid | Referència a `usuaris` |
 | completada_quan | timestamptz | Data i hora de completació |
 
@@ -110,15 +111,6 @@ L'aplicació és una **web app** accessible des del navegador del mòbil. No és
 | modificat_per | uuid | Referència a `usuaris` |
 | modificat_quan | timestamptz | Data i hora de darrera modificació |
 
-### `recursos`
-| Camp | Tipus | Descripció |
-|---|---|---|
-| id | uuid | Clau primària |
-| titol | text | Nom visible de l'enllaç |
-| url | text | URL externa o ruta del PDF |
-| categoria | text | Agrupació (p.ex. "Transport", "Contractes") |
-| ordre | integer | Ordre de visualització |
-
 ---
 
 ## 5. Estructura del repositori
@@ -133,16 +125,13 @@ lanostraclau/
 │   ├── tasques.py
 │   ├── informacio.py
 │   └── administracio.py
-├── components/             # Components reutilitzables de UI
-├── serveis/                # Lògica de negoci i accés a Supabase
-│   ├── estades.py
-│   ├── checklist.py
-│   ├── tasques.py
-│   └── usuaris.py
+├── serveis/
+│   └── auth.py             # Autenticació (magic link, sessió)
+├── static/
+│   └── sarfa.pdf           # Horaris de bus BCN–Palamós
 ├── docs/
 │   ├── requisits.md
-│   ├── arquitectura.md
-│   └── manual_usuari.md    # (pendent)
+│   └── arquitectura.md
 ├── .env.example            # Variables d'entorn d'exemple (sense secrets)
 ├── requirements.txt
 └── README.md
@@ -163,16 +152,16 @@ A Streamlit Cloud es configuren a la secció **Secrets** del projecte.
 
 ---
 
-## 7. Pla de desplegament
+## 7. Desplegament
 
-1. Codi al repositori GitHub (`orfeu65/lanostraclau`).
-2. Streamlit Cloud connectat al repositori (desplegament automàtic en cada `git push`).
-3. Supabase com a base de dades i autenticació al núvol.
-4. URL final de l'app: `https://lanostraclau.streamlit.app` (o similar).
+- Codi al repositori GitHub (`orfeu65/lanostraclau`).
+- Streamlit Cloud connectat al repositori — redeploya automàticament en cada `git push` a `main`.
+- Supabase com a base de dades i autenticació al núvol.
+- URL de l'app: `https://lanostraclau.streamlit.app`
 
 ---
 
-## 8. Pla de desenvolupament
+## 8. Estat del desenvolupament
 
 | Pas | Descripció | Estat |
 |---|---|---|
@@ -180,11 +169,10 @@ A Streamlit Cloud es configuren a la secció **Secrets** del projecte.
 | 2 | Documentació (requisits + arquitectura) | ✅ Fet |
 | 3 | Creació de taules a Supabase | ✅ Fet |
 | 4 | Configuració autenticació magic link | ✅ Fet |
-| 5 | Desenvolupament mòdul per mòdul | Pendent |
-| 6 | Proves i ajustos | Pendent |
-| 7 | Desplegament a Streamlit Cloud | Pendent |
-| 8 | Manual d'usuari | Pendent |
+| 5 | Desenvolupament mòdul per mòdul | ✅ Fet |
+| 6 | Proves i ajustos | ✅ Fet |
+| 7 | Desplegament a Streamlit Cloud | ✅ Fet |
 
 ---
 
-*Document generat durant la fase de disseny del projecte. Pot ser actualitzat a mesura que evolucioni el desenvolupament.*
+*Actualitzat a mesura que evoluciona el projecte.*

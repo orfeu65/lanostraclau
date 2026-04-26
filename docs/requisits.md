@@ -1,8 +1,8 @@
 # La Nostra Clau — Document de Requisits
 
-**Versió:** 1.0  
-**Data:** Abril 2025  
-**Estat:** Esborrany inicial  
+**Versió:** 1.1  
+**Data:** Abril 2026  
+**Estat:** Implementat i en producció  
 
 ---
 
@@ -50,7 +50,7 @@ Permet veure i gestionar les estades al pis.
 - Es pot veure d'un cop d'ull quan el pis està ocupat i per qui.
 
 **Gestió d'estades:**
-- Crear una nova estada seleccionant dies al calendari.
+- Qualsevol usuari pot crear una nova estada seleccionant dies al calendari.
 - Editar o eliminar una estada pròpia.
 - L'administradora pot editar o eliminar estades de qualsevol família.
 - **Les estades no se solapen**: el sistema ho ha d'impedir. En casos excepcionals (molt rars), es pot indicar al comentari de l'estada.
@@ -67,14 +67,12 @@ Permet veure i gestionar les estades al pis.
 
 Una llista de comprovació que el responsable de l'estada ha d'emplenar abans de marxar del pis.
 
-- La llista és **sempre la mateixa** (versió inicial fixa; editable en versions futures).
+- La llista és **sempre la mateixa** (editable en versions futures des de la pàgina d'administració).
 - Els ítems estan organitzats en **seccions** (per exemple: "Unes hores abans de marxar" / "Just al marxar").
 - Cada ítem pot ser **obligatori** o **opcional**.
-- Hi ha un **comentari general** únic per a tota la llista de sortida d'aquella estada.
+- Hi ha un **comentari general** únic per a tota la llista de sortida d'aquella estada (es desa a l'estada).
 - Es guarda qui ha marcat la llista i quan.
 - El comentari de la darrera llista de sortida completada es mostra a la pàgina d'inici.
-
-**Llista de comprovació inicial:** pendent de ser facilitada pels propietaris.
 
 ---
 
@@ -93,12 +91,12 @@ Llista col·lectiva de feines o millores pendents al pis.
 
 ### 3.5 Informació útil
 
-Pàgina estàtica amb recursos i informació d'interès.
+Pàgina amb recursos i informació d'interès:
 
-- Enllaços a la carpeta de Drive (comptabilitat, factures, contractes).
-- Horaris de transport públic (PDF adjunt o enllaç extern).
-- Proveïdors i números de contracte (llum, gas, aigua...).
-- Telèfons d'interès (lampista, electricista, etc.).
+- **Google Drive**: enllaç a la carpeta compartida (comptabilitat, factures, contractes).
+- **Subministres i telèfons**: empresa, telèfon i web de cada servei (aigua, gas, llum, Wi-Fi, assegurança, caldera, A/C).
+- **Acords entre famílies**: usos preferents i altres pactes interns.
+- **Transport (SARFA)**: enllaços als horaris i PDF descarregable.
 
 ---
 
@@ -123,6 +121,7 @@ Pàgina estàtica amb recursos i informació d'interès.
 | Comptabilitat | Es manté a Google Drive | L'app només ofereix accés ràpid |
 | Autenticació | Magic link per email | Accessible per a tots els membres de les famílies, sense comptes externs ni contrasenyes |
 | Idioma | Català (tot: UI, codi, comentaris, docs) | Decisió de les propietàries |
+| Crear estades | Qualsevol usuari autenticat | Totes les famílies han de poder reservar el pis |
 
 ---
 
@@ -136,4 +135,4 @@ Pàgina estàtica amb recursos i informació d'interès.
 
 ---
 
-*Document generat durant la fase de definició del projecte. Pot ser actualitzat a mesura que evolucioni el desenvolupament.*
+*Actualitzat a mesura que evoluciona el projecte.*

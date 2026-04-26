@@ -3,6 +3,8 @@ import streamlit as st
 from pathlib import Path
 
 
+_DRIVE_URL = "https://drive.google.com/drive/folders/1zHK81pl95dd9CYstHaSTzG8swc_-8Dd0"
+
 _SARFA_PALAMOS_URL = "https://www.moventis.es/ca/consulta-els-horaris-la-nova-estacio-dautobusos-de-palamos"
 _SARFA_URL = "https://www.moventis.es/es/lineas-horarios/linea-autobus-1-aeroport-bcn-barcelona-costa-brava-centre"
 _SARFA_L44_URL = "https://www.moventis.es/ca/linies-horaris/linia-autobus-44-e3-girona-palamos-palafrugell"
@@ -26,6 +28,12 @@ _ACORDS = [
 
 def mostrar(supabase) -> None:
     st.title("ℹ️ Informació útil")
+
+    # --- Drive ---
+    st.subheader("📁 Google Drive")
+    st.markdown(f"[Carpeta compartida (comptabilitat, contractes, documents)]({_DRIVE_URL})")
+
+    st.divider()
 
     # --- Subministres ---
     st.subheader("📞 Subministres i telèfons d'interès")

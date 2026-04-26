@@ -4,6 +4,11 @@ from datetime import date, datetime, timezone, timedelta
 from typing import Optional
 from serveis.auth import obtenir_usuari_actual
 
+_ICONES_SECCIO = {
+    "El mateix dia de la sortida": "🧹",
+    "Just abans de sortir":        "👋",
+}
+
 
 def mostrar(supabase) -> None:
     st.title("✅ Llista de sortida")
@@ -21,11 +26,8 @@ def mostrar(supabase) -> None:
         st.info("La llista de sortida s'omple el dia que marxes. No tens cap estada que finalitzi avui o en els darrers 3 dies.")
         return
 
-    st.caption(
-        f"Estada: {_formata_data(estada['data_inici'])} — {_formata_data(estada['data_fi'])}"
-    )
+    st.caption(f"Estada: {_formata_data(estada['data_inici'])} — {_formata_data(estada['data_fi'])}")
     st.info("Segons com estigui el pis, et pot portar tot el dia (si has de rentar roba), 30 minuts (si has de netejar) o 10 minuts (si tot està ja net).")
-    st.divider()
 
     items = _obtenir_items(supabase)
     if not items:
@@ -35,45 +37,46 @@ def mostrar(supabase) -> None:
     respostes = _obtenir_respostes(supabase, estada["id"])
     respostes_per_item = {r["item_id"]: r for r in respostes}
 
-    _mostrar_formulari(supabase, estada, items, respostes_per_item, usuari_id)
+    # Inicialitzem l'estat dels checkboxes a session_state
+    clau_estada = f"checklist_{estada['id']}"
+    if clau_estada not in st.session_state:
+        st.session_state[clau_estada] = {
+            item["id"]: respostes_per_item.get(item["id"], {}).get("fet", False)
+            for item in items
+        }
 
+    marcats = st.session_state[clau_estada]
 
-# --- Seccions ---
+    # --- Seccions del checklist ---
+    seccions = {}
+    for item in items:
+        seccions.setdefault(item["seccio"], []).append(item)
 
-def _mostrar_formulari(supabase, estada, items, respostes_per_item, usuari_id) -> None:
-    """Mostra el formulari de checklist amb seccions i comentari."""
-    with st.form("llista_sortida"):
-        marcats = {}
+    for seccio, items_seccio in seccions.items():
+        icona = _ICONES_SECCIO.get(seccio, "📋")
+        st.subheader(f"{icona} {seccio}")
+        for item in items_seccio:
+            label = item["descripcio"]
+            if item.get("es_opcional"):
+                label += " *(opcional)*"
+            marcats[item["id"]] = st.checkbox(
+                label,
+                value=marcats[item["id"]],
+                key=f"cb_{estada['id']}_{item['id']}",
+            )
 
-        # Agrupem els ítems per secció mantenint l'ordre
-        seccions = {}
-        for item in items:
-            seccions.setdefault(item["seccio"], []).append(item)
+    # --- Comentari ---
+    st.divider()
+    st.subheader("💬 Comentari")
+    comentari = st.text_area(
+        "Comentari",
+        value=estada.get("comentari_sortida") or "",
+        placeholder="Notes o incidències d'aquesta estada...",
+        height=80,
+        label_visibility="collapsed",
+    )
 
-        for seccio, items_seccio in seccions.items():
-            st.subheader(seccio)
-            for item in items_seccio:
-                valor_actual = respostes_per_item.get(item["id"], {}).get("fet", False)
-                label = item["descripcio"]
-                if item.get("es_opcional"):
-                    label += " *(opcional)*"
-                marcats[item["id"]] = st.checkbox(
-                    label,
-                    value=valor_actual,
-                    key=f"item_{item['id']}",
-                )
-
-        st.divider()
-        comentari = st.text_area(
-            "Comentari (opcional)",
-            value=estada.get("comentari_sortida") or "",
-            placeholder="Notes o incidències d'aquesta estada...",
-            height=80,
-        )
-
-        desat = st.form_submit_button("Desar llista", use_container_width=True)
-
-    if desat:
+    if st.button("Desar llista", use_container_width=True):
         _desar_respostes(supabase, estada, items, marcats, comentari, usuari_id)
 
 
@@ -84,13 +87,12 @@ def _desar_respostes(supabase, estada, items, marcats, comentari, usuari_id) -> 
     try:
         ara = datetime.now(timezone.utc).isoformat()
 
-        # Upsert de cada ítem
         registres = [
             {
-                "estada_id":      estada["id"],
-                "item_id":        item["id"],
-                "fet":            marcats.get(item["id"], False),
-                "completada_per": usuari_id,
+                "estada_id":       estada["id"],
+                "item_id":         item["id"],
+                "fet":             marcats.get(item["id"], False),
+                "completada_per":  usuari_id,
                 "completada_quan": ara,
             }
             for item in items
@@ -99,13 +101,11 @@ def _desar_respostes(supabase, estada, items, marcats, comentari, usuari_id) -> 
             registres, on_conflict="estada_id,item_id"
         ).execute()
 
-        # Desar el comentari a l'estada
         supabase.table("estades").update({
             "comentari_sortida": comentari or None,
             "modificada_quan":   ara,
         }).eq("id", estada["id"]).execute()
 
-        # Comprovem si queden obligatoris sense marcar
         obligatoris_pendents = [
             item["descripcio"]
             for item in items
@@ -119,6 +119,8 @@ def _desar_respostes(supabase, estada, items, marcats, comentari, usuari_id) -> 
         else:
             st.success("Llista de sortida completada. Bon viatge! 🏖️")
 
+        clau_estada = f"checklist_{estada['id']}"
+        st.session_state.pop(clau_estada, None)
         st.rerun()
 
     except Exception as e:
@@ -126,11 +128,6 @@ def _desar_respostes(supabase, estada, items, marcats, comentari, usuari_id) -> 
 
 
 def _obtenir_estada_rellevant(supabase, familia_id: str) -> Optional[dict]:
-    """
-    Retorna l'estada que finalitza avui, o la que ha finalitzat
-    en els últims 3 dies (per si no s'ha omplert a temps).
-    No es pot omplir la llista abans del dia de sortida.
-    """
     avui = date.today().isoformat()
     tres_dies = (date.today() - timedelta(days=3)).isoformat()
     try:
@@ -146,15 +143,12 @@ def _obtenir_estada_rellevant(supabase, familia_id: str) -> Optional[dict]:
         )
         if res and res.data:
             return res.data[0]
-
     except Exception as e:
         st.warning(f"Error carregant l'estada: {e}")
-
     return None
 
 
 def _obtenir_items(supabase) -> list:
-    """Retorna tots els ítems de la llista ordenats."""
     try:
         res = supabase.table("checklist_items").select("*").order("ordre").execute()
         return res.data or []
@@ -163,7 +157,6 @@ def _obtenir_items(supabase) -> list:
 
 
 def _obtenir_respostes(supabase, estada_id: str) -> list:
-    """Retorna les respostes ja desades per a una estada."""
     try:
         res = (
             supabase.table("checklist_respostes")
@@ -177,7 +170,6 @@ def _obtenir_respostes(supabase, estada_id: str) -> list:
 
 
 def _obtenir_usuari_info(supabase, usuari) -> tuple:
-    """Retorna (usuari_id, familia_id) de l'usuari actual."""
     if not usuari:
         return None, None
     try:
@@ -196,10 +188,7 @@ def _obtenir_usuari_info(supabase, usuari) -> tuple:
     return None, None
 
 
-# --- Utilitats ---
-
 def _formata_data(data_iso: Optional[str]) -> str:
-    """Converteix una data ISO (YYYY-MM-DD) a format llegible (DD/MM/YYYY)."""
     if not data_iso:
         return "—"
     try:

@@ -59,14 +59,26 @@ CREATE TABLE IF NOT EXISTS estades (
     CONSTRAINT dates_correctes CHECK (data_fi >= data_inici)
 );
 
+-- Seccions de la llista de sortida
+CREATE TABLE IF NOT EXISTS seccions_checklist (
+    id    uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    nom   text NOT NULL,
+    icona text NOT NULL DEFAULT '📋',
+    ordre integer NOT NULL DEFAULT 0
+);
+
 -- Ítems de la llista de sortida
 CREATE TABLE IF NOT EXISTS checklist_items (
     id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     seccio      text NOT NULL,
+    seccio_id   uuid REFERENCES seccions_checklist(id),
     descripcio  text NOT NULL,
     es_opcional boolean NOT NULL DEFAULT false,
     ordre       integer NOT NULL DEFAULT 0
 );
+
+-- Migració: afegir seccio_id si la columna no existia
+ALTER TABLE checklist_items ADD COLUMN IF NOT EXISTS seccio_id uuid REFERENCES seccions_checklist(id);
 
 -- Respostes de la llista de sortida per estada
 CREATE TABLE IF NOT EXISTS checklist_respostes (
@@ -134,6 +146,7 @@ CREATE TABLE IF NOT EXISTS acords (
 ALTER TABLE families            ENABLE ROW LEVEL SECURITY;
 ALTER TABLE usuaris             ENABLE ROW LEVEL SECURITY;
 ALTER TABLE estades             ENABLE ROW LEVEL SECURITY;
+ALTER TABLE seccions_checklist  ENABLE ROW LEVEL SECURITY;
 ALTER TABLE checklist_items     ENABLE ROW LEVEL SECURITY;
 ALTER TABLE checklist_respostes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE tasques             ENABLE ROW LEVEL SECURITY;
@@ -146,6 +159,7 @@ ALTER TABLE acords              ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "usuaris autenticats poden llegir families"            ON families;
 DROP POLICY IF EXISTS "usuaris autenticats poden llegir usuaris"             ON usuaris;
 DROP POLICY IF EXISTS "usuaris autenticats poden llegir estades"             ON estades;
+DROP POLICY IF EXISTS "usuaris autenticats poden llegir seccions_checklist"  ON seccions_checklist;
 DROP POLICY IF EXISTS "usuaris autenticats poden llegir checklist_items"     ON checklist_items;
 DROP POLICY IF EXISTS "usuaris autenticats poden llegir checklist_respostes" ON checklist_respostes;
 DROP POLICY IF EXISTS "usuaris autenticats poden llegir tasques"             ON tasques;
@@ -162,6 +176,9 @@ CREATE POLICY "usuaris autenticats poden llegir usuaris"
 
 CREATE POLICY "usuaris autenticats poden llegir estades"
     ON estades FOR SELECT TO authenticated USING (true);
+
+CREATE POLICY "usuaris autenticats poden llegir seccions_checklist"
+    ON seccions_checklist FOR SELECT TO authenticated USING (true);
 
 CREATE POLICY "usuaris autenticats poden llegir checklist_items"
     ON checklist_items FOR SELECT TO authenticated USING (true);
@@ -224,6 +241,7 @@ CREATE POLICY "usuaris poden escriure tasques"
 -- Families, usuaris, checklist_items: només l'administradora pot escriure
 DROP POLICY IF EXISTS "admins poden gestionar families"        ON families;
 DROP POLICY IF EXISTS "admins poden gestionar usuaris"         ON usuaris;
+DROP POLICY IF EXISTS "admins poden gestionar seccions_checklist" ON seccions_checklist;
 DROP POLICY IF EXISTS "admins poden gestionar checklist_items" ON checklist_items;
 
 CREATE POLICY "admins poden gestionar families"
@@ -233,6 +251,11 @@ CREATE POLICY "admins poden gestionar families"
 
 CREATE POLICY "admins poden gestionar usuaris"
     ON usuaris FOR ALL TO authenticated
+    USING (is_admin())
+    WITH CHECK (is_admin());
+
+CREATE POLICY "admins poden gestionar seccions_checklist"
+    ON seccions_checklist FOR ALL TO authenticated
     USING (is_admin())
     WITH CHECK (is_admin());
 
@@ -281,6 +304,7 @@ CREATE POLICY "usuaris poden modificar avisos"
 CREATE INDEX IF NOT EXISTS idx_estades_dates      ON estades (data_inici, data_fi);
 CREATE INDEX IF NOT EXISTS idx_usuaris_email      ON usuaris (email);
 CREATE INDEX IF NOT EXISTS idx_recursos_ordre     ON recursos (ordre);
+CREATE INDEX IF NOT EXISTS idx_seccions_ordre     ON seccions_checklist (ordre);
 CREATE INDEX IF NOT EXISTS idx_checklist_ordre    ON checklist_items (ordre);
 CREATE INDEX IF NOT EXISTS idx_estades_familia    ON estades (familia_id, data_inici);
 CREATE INDEX IF NOT EXISTS idx_subministres_ordre ON subministres (ordre);

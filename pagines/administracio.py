@@ -11,19 +11,21 @@ def mostrar(supabase) -> None:
         st.error("Accés restringit a l'administradora.")
         return
 
-    tabs = st.tabs(["Usuaris", "Famílies", "Checklist", "Subministres", "Acords", "Recursos"])
+    tabs = st.tabs(["Usuaris", "Famílies", "Seccions", "Checklist", "Subministres", "Acords", "Recursos"])
 
     with tabs[0]:
         _gestionar_usuaris(supabase)
     with tabs[1]:
         _gestionar_families(supabase)
     with tabs[2]:
-        _gestionar_checklist(supabase)
+        _gestionar_seccions_checklist(supabase)
     with tabs[3]:
-        _gestionar_subministres(supabase)
+        _gestionar_checklist(supabase)
     with tabs[4]:
-        _gestionar_acords(supabase)
+        _gestionar_subministres(supabase)
     with tabs[5]:
+        _gestionar_acords(supabase)
+    with tabs[6]:
         _gestionar_recursos(supabase)
 
 
@@ -126,28 +128,79 @@ def _gestionar_families(supabase) -> None:
                     st.error("El nom és obligatori.")
 
 
+# --- Seccions del checklist ---
+
+def _gestionar_seccions_checklist(supabase) -> None:
+    st.subheader("Seccions de la llista de sortida")
+    seccions = _obtenir(supabase, "seccions_checklist", "ordre")
+
+    for s in seccions:
+        etiqueta = f"{s.get('icona', '📋')} {s['nom']}"
+        with st.expander(etiqueta):
+            with st.form(f"edit_sec_{s['id']}"):
+                nom   = st.text_input("Nom",   value=s["nom"])
+                icona = st.text_input("Icona", value=s.get("icona") or "📋")
+                ordre = st.number_input("Ordre", value=s.get("ordre") or 0, step=1)
+                c1, c2 = st.columns(2)
+                desar    = c1.form_submit_button("Desar",    use_container_width=True)
+                eliminar = c2.form_submit_button("Eliminar", use_container_width=True)
+
+            if desar:
+                supabase.table("seccions_checklist").update({
+                    "nom": nom, "icona": icona or "📋", "ordre": ordre,
+                }).eq("id", s["id"]).execute()
+                st.rerun()
+            if eliminar:
+                supabase.table("seccions_checklist").delete().eq("id", s["id"]).execute()
+                st.rerun()
+
+    st.divider()
+    with st.expander("➕ Nova secció"):
+        with st.form("nova_seccio"):
+            nom   = st.text_input("Nom")
+            icona = st.text_input("Icona (emoji)", value="📋")
+            ordre = st.number_input("Ordre", value=len(seccions), step=1)
+            if st.form_submit_button("Afegir", use_container_width=True):
+                if nom.strip():
+                    supabase.table("seccions_checklist").insert({
+                        "nom": nom.strip(), "icona": icona.strip() or "📋", "ordre": ordre,
+                    }).execute()
+                    st.rerun()
+                else:
+                    st.error("El nom és obligatori.")
+
+
 # --- Checklist ---
 
 def _gestionar_checklist(supabase) -> None:
     st.subheader("Llista de sortida")
+    seccions = _obtenir(supabase, "seccions_checklist", "ordre")
+    seccio_opcions = {s["nom"]: s["id"] for s in seccions}
+    seccio_noms    = {s["id"]: s["nom"] for s in seccions}
     items = _obtenir(supabase, "checklist_items", "ordre")
 
     for item in items:
-        etiqueta = f"{item['seccio']} — {item['descripcio'][:40]}{'…' if len(item['descripcio']) > 40 else ''}"
+        seccio_nom = seccio_noms.get(item.get("seccio_id"), item.get("seccio", "—"))
+        etiqueta = f"{seccio_nom} — {item['descripcio'][:40]}{'…' if len(item['descripcio']) > 40 else ''}"
         with st.expander(etiqueta):
             with st.form(f"edit_chk_{item['id']}"):
-                seccio     = st.text_input("Secció",      value=item["seccio"])
-                descripcio = st.text_area("Descripció",   value=item["descripcio"], height=80)
-                es_opcional = st.checkbox("Opcional",     value=bool(item.get("es_opcional")))
-                ordre      = st.number_input("Ordre",     value=item.get("ordre") or 0, step=10)
-                c1, c2     = st.columns(2)
-                desar      = c1.form_submit_button("Desar",    use_container_width=True)
-                eliminar   = c2.form_submit_button("Eliminar", use_container_width=True)
+                noms_seccio = list(seccio_opcions.keys())
+                idx = noms_seccio.index(seccio_nom) if seccio_nom in seccio_opcions else 0
+                seccio_sel  = st.selectbox("Secció", noms_seccio, index=idx)
+                descripcio  = st.text_area("Descripció", value=item["descripcio"], height=80)
+                es_opcional = st.checkbox("Opcional",    value=bool(item.get("es_opcional")))
+                ordre       = st.number_input("Ordre",   value=item.get("ordre") or 0, step=10)
+                c1, c2      = st.columns(2)
+                desar       = c1.form_submit_button("Desar",    use_container_width=True)
+                eliminar    = c2.form_submit_button("Eliminar", use_container_width=True)
 
             if desar:
                 supabase.table("checklist_items").update({
-                    "seccio": seccio, "descripcio": descripcio,
-                    "es_opcional": es_opcional, "ordre": ordre,
+                    "seccio_id":  seccio_opcions[seccio_sel],
+                    "seccio":     seccio_sel,
+                    "descripcio": descripcio,
+                    "es_opcional": es_opcional,
+                    "ordre":      ordre,
                 }).eq("id", item["id"]).execute()
                 st.rerun()
             if eliminar:
@@ -157,15 +210,19 @@ def _gestionar_checklist(supabase) -> None:
     st.divider()
     with st.expander("➕ Nou ítem"):
         with st.form("nou_chk"):
-            seccio     = st.text_input("Secció")
-            descripcio = st.text_area("Descripció", height=80)
+            noms_seccio = list(seccio_opcions.keys())
+            seccio_sel  = st.selectbox("Secció", noms_seccio) if noms_seccio else None
+            descripcio  = st.text_area("Descripció", height=80)
             es_opcional = st.checkbox("Opcional", value=False)
-            ordre      = st.number_input("Ordre", value=(max(i.get("ordre", 0) for i in items) + 10) if items else 10, step=10)
+            ordre       = st.number_input("Ordre", value=(max(i.get("ordre", 0) for i in items) + 10) if items else 10, step=10)
             if st.form_submit_button("Afegir", use_container_width=True):
-                if seccio.strip() and descripcio.strip():
+                if seccio_sel and descripcio.strip():
                     supabase.table("checklist_items").insert({
-                        "seccio": seccio.strip(), "descripcio": descripcio.strip(),
-                        "es_opcional": es_opcional, "ordre": ordre,
+                        "seccio_id":  seccio_opcions[seccio_sel],
+                        "seccio":     seccio_sel,
+                        "descripcio": descripcio.strip(),
+                        "es_opcional": es_opcional,
+                        "ordre":      ordre,
                     }).execute()
                     st.rerun()
                 else:

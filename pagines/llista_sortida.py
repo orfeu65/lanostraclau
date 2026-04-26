@@ -4,12 +4,6 @@ from datetime import date, datetime, timezone, timedelta
 from typing import Optional
 from serveis.auth import obtenir_usuari_actual
 
-_ICONES_SECCIO = {
-    "El mateix dia de la sortida": "🧹",
-    "Just abans de sortir":        "👋",
-}
-
-
 def mostrar(supabase) -> None:
     st.title("✅ Llista de sortida")
 
@@ -29,6 +23,7 @@ def mostrar(supabase) -> None:
     st.caption(f"Estada: {_formata_data(estada['data_inici'])} — {_formata_data(estada['data_fi'])}")
     st.info("Segons com estigui el pis, et pot portar tot el dia (si has de rentar roba), 30 minuts (si has de netejar) o 10 minuts (si tot està ja net).")
 
+    seccions = _obtenir_seccions(supabase)
     items = _obtenir_items(supabase)
     if not items:
         st.warning("La llista de comprovació no té ítems. Contacta amb l'administradora.")
@@ -47,14 +42,17 @@ def mostrar(supabase) -> None:
 
     marcats = st.session_state[clau_estada]
 
-    # --- Seccions del checklist ---
-    seccions = {}
+    # --- Seccions del checklist (des de la BD) ---
+    items_per_seccio: dict = {}
     for item in items:
-        seccions.setdefault(item["seccio"], []).append(item)
+        sid = item.get("seccio_id") or item.get("seccio", "")
+        items_per_seccio.setdefault(sid, []).append(item)
 
-    for seccio, items_seccio in seccions.items():
-        icona = _ICONES_SECCIO.get(seccio, "📋")
-        st.subheader(f"{icona} {seccio}")
+    for seccio in seccions:
+        items_seccio = items_per_seccio.get(seccio["id"], [])
+        if not items_seccio:
+            continue
+        st.subheader(f"{seccio.get('icona', '📋')} {seccio['nom']}")
         for item in items_seccio:
             label = item["descripcio"]
             if item.get("es_opcional"):
@@ -146,6 +144,14 @@ def _obtenir_estada_rellevant(supabase, familia_id: str) -> Optional[dict]:
     except Exception as e:
         st.warning(f"Error carregant l'estada: {e}")
     return None
+
+
+def _obtenir_seccions(supabase) -> list:
+    try:
+        res = supabase.table("seccions_checklist").select("*").order("ordre").execute()
+        return res.data or []
+    except Exception:
+        return []
 
 
 def _obtenir_items(supabase) -> list:

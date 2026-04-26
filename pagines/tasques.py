@@ -50,7 +50,7 @@ def _formulari_nova_tasca(supabase, usuari_id: Optional[str]) -> None:
 
 def _llista_tasques_pendents(supabase, usuari_id: Optional[str]) -> None:
     """Mostra les tasques pendents."""
-    st.subheader("Pendents")
+    st.subheader("⚒️ Pendents")
     try:
         res = (
             supabase.table("tasques")
@@ -81,7 +81,7 @@ def _llista_tasques_pendents(supabase, usuari_id: Optional[str]) -> None:
 
 def _historial_tasques_completades(supabase) -> None:
     """Mostra l'historial de tasques completades."""
-    with st.expander("Historial de tasques completades"):
+    with st.expander("🎉 Fetes"):
         try:
             res = (
                 supabase.table("tasques")

@@ -11,16 +11,165 @@ def mostrar(supabase) -> None:
         st.error("Accés restringit a l'administradora.")
         return
 
-    tab_sub, tab_acords, tab_rec = st.tabs(["Subministres", "Acords", "Recursos"])
+    tabs = st.tabs(["Usuaris", "Famílies", "Checklist", "Subministres", "Acords", "Recursos"])
 
-    with tab_sub:
+    with tabs[0]:
+        _gestionar_usuaris(supabase)
+    with tabs[1]:
+        _gestionar_families(supabase)
+    with tabs[2]:
+        _gestionar_checklist(supabase)
+    with tabs[3]:
         _gestionar_subministres(supabase)
-
-    with tab_acords:
+    with tabs[4]:
         _gestionar_acords(supabase)
-
-    with tab_rec:
+    with tabs[5]:
         _gestionar_recursos(supabase)
+
+
+# --- Usuaris ---
+
+def _gestionar_usuaris(supabase) -> None:
+    st.subheader("Usuaris")
+    families = _obtenir(supabase, "families", "nom")
+    familia_noms = {f["id"]: f["nom"] for f in families}
+    familia_opcions = {f["nom"]: f["id"] for f in families}
+
+    usuaris = supabase.table("usuaris").select("*").order("nom").execute().data or []
+
+    for u in usuaris:
+        etiqueta = u["nom"] + ("" if u.get("actiu", True) else " ⚠️ desactivat")
+        with st.expander(etiqueta):
+            with st.form(f"edit_usr_{u['id']}"):
+                nom      = st.text_input("Nom",   value=u["nom"])
+                email    = st.text_input("Email", value=u["email"], disabled=True)
+                familia_actual = familia_noms.get(u.get("familia_id"), "")
+                familia_idx = list(familia_opcions.keys()).index(familia_actual) if familia_actual in familia_opcions else 0
+                familia_sel = st.selectbox("Família", list(familia_opcions.keys()), index=familia_idx)
+                es_admin = st.checkbox("Administradora", value=bool(u.get("es_admin")))
+                actiu    = st.checkbox("Actiu",          value=bool(u.get("actiu", True)))
+                desar    = st.form_submit_button("Desar", use_container_width=True)
+
+            if desar:
+                supabase.table("usuaris").update({
+                    "nom":       nom,
+                    "familia_id": familia_opcions[familia_sel],
+                    "es_admin":  es_admin,
+                    "actiu":     actiu,
+                }).eq("id", u["id"]).execute()
+                st.rerun()
+
+    st.divider()
+    with st.expander("➕ Nou usuari"):
+        st.caption("Cal crear l'usuari primer a Supabase Auth (Authentication → Users) abans d'afegir-lo aquí.")
+        with st.form("nou_usr"):
+            nom      = st.text_input("Nom")
+            email    = st.text_input("Email")
+            familia_sel = st.selectbox("Família", list(familia_opcions.keys()))
+            es_admin = st.checkbox("Administradora", value=False)
+            if st.form_submit_button("Afegir", use_container_width=True):
+                if nom.strip() and email.strip():
+                    try:
+                        res_auth = supabase.table("usuaris").select("id").eq("email", email.strip()).maybe_single().execute()
+                        if res_auth.data:
+                            st.error("Aquest email ja existeix.")
+                        else:
+                            # Obtenim l'id de auth.users
+                            auth_res = supabase.auth.admin.get_user_by_email(email.strip())
+                            supabase.table("usuaris").insert({
+                                "id":        auth_res.user.id,
+                                "nom":       nom.strip(),
+                                "email":     email.strip(),
+                                "familia_id": familia_opcions[familia_sel],
+                                "es_admin":  es_admin,
+                                "actiu":     True,
+                            }).execute()
+                            st.rerun()
+                    except Exception as e:
+                        st.error(f"Error: {e}")
+                else:
+                    st.error("El nom i l'email són obligatoris.")
+
+
+# --- Famílies ---
+
+def _gestionar_families(supabase) -> None:
+    st.subheader("Famílies")
+    items = _obtenir(supabase, "families", "nom")
+
+    for f in items:
+        with st.expander(f["nom"]):
+            with st.form(f"edit_fam_{f['id']}"):
+                nom   = st.text_input("Nom",   value=f["nom"])
+                color = st.color_picker("Color", value=f.get("color") or "#cccccc")
+                c1, c2 = st.columns(2)
+                desar    = c1.form_submit_button("Desar",    use_container_width=True)
+                eliminar = c2.form_submit_button("Eliminar", use_container_width=True)
+
+            if desar:
+                supabase.table("families").update({"nom": nom, "color": color}).eq("id", f["id"]).execute()
+                st.rerun()
+            if eliminar:
+                supabase.table("families").delete().eq("id", f["id"]).execute()
+                st.rerun()
+
+    st.divider()
+    with st.expander("➕ Nova família"):
+        with st.form("nova_fam"):
+            nom   = st.text_input("Nom")
+            color = st.color_picker("Color", value="#cccccc")
+            if st.form_submit_button("Afegir", use_container_width=True):
+                if nom.strip():
+                    supabase.table("families").insert({"nom": nom.strip(), "color": color}).execute()
+                    st.rerun()
+                else:
+                    st.error("El nom és obligatori.")
+
+
+# --- Checklist ---
+
+def _gestionar_checklist(supabase) -> None:
+    st.subheader("Llista de sortida")
+    items = _obtenir(supabase, "checklist_items", "ordre")
+
+    for item in items:
+        etiqueta = f"{item['seccio']} — {item['descripcio'][:40]}{'…' if len(item['descripcio']) > 40 else ''}"
+        with st.expander(etiqueta):
+            with st.form(f"edit_chk_{item['id']}"):
+                seccio     = st.text_input("Secció",      value=item["seccio"])
+                descripcio = st.text_area("Descripció",   value=item["descripcio"], height=80)
+                es_opcional = st.checkbox("Opcional",     value=bool(item.get("es_opcional")))
+                ordre      = st.number_input("Ordre",     value=item.get("ordre") or 0, step=10)
+                c1, c2     = st.columns(2)
+                desar      = c1.form_submit_button("Desar",    use_container_width=True)
+                eliminar   = c2.form_submit_button("Eliminar", use_container_width=True)
+
+            if desar:
+                supabase.table("checklist_items").update({
+                    "seccio": seccio, "descripcio": descripcio,
+                    "es_opcional": es_opcional, "ordre": ordre,
+                }).eq("id", item["id"]).execute()
+                st.rerun()
+            if eliminar:
+                supabase.table("checklist_items").delete().eq("id", item["id"]).execute()
+                st.rerun()
+
+    st.divider()
+    with st.expander("➕ Nou ítem"):
+        with st.form("nou_chk"):
+            seccio     = st.text_input("Secció")
+            descripcio = st.text_area("Descripció", height=80)
+            es_opcional = st.checkbox("Opcional", value=False)
+            ordre      = st.number_input("Ordre", value=(max(i.get("ordre", 0) for i in items) + 10) if items else 10, step=10)
+            if st.form_submit_button("Afegir", use_container_width=True):
+                if seccio.strip() and descripcio.strip():
+                    supabase.table("checklist_items").insert({
+                        "seccio": seccio.strip(), "descripcio": descripcio.strip(),
+                        "es_opcional": es_opcional, "ordre": ordre,
+                    }).execute()
+                    st.rerun()
+                else:
+                    st.error("La secció i la descripció són obligatòries.")
 
 
 # --- Subministres ---
@@ -119,7 +268,6 @@ def _gestionar_acords(supabase) -> None:
 def _gestionar_recursos(supabase) -> None:
     st.subheader("Recursos i enllaços")
     items = _obtenir(supabase, "recursos", "ordre")
-
     CATEGORIES = ["drive", "transport"]
 
     for r in items:

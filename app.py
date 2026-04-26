@@ -64,6 +64,11 @@ if not obtenir_usuari_actual():
     mostrar_login(supabase)
     st.stop()
 
+# Restaurem la sessió al client Supabase a cada rerun (necessari per a RLS)
+sessio = st.session_state.get("sessio")
+if sessio:
+    supabase.auth.set_session(sessio.access_token, sessio.refresh_token)
+
 # --- App principal (usuari autenticat) ---
 st.sidebar.title("🔑 La Nostra Clau")
 st.sidebar.caption("Pis de Palamós")

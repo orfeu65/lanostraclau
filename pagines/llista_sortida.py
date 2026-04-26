@@ -48,10 +48,12 @@ def mostrar(supabase) -> None:
         sid = item.get("seccio_id") or item.get("seccio", "")
         items_per_seccio.setdefault(sid, []).append(item)
 
-    for seccio in seccions:
+    for i, seccio in enumerate(seccions):
         items_seccio = items_per_seccio.get(seccio["id"], [])
         if not items_seccio:
             continue
+        if i > 0:
+            st.divider()
         st.subheader(f"{seccio.get('icona', '📋')} {seccio['nom']}")
         for item in items_seccio:
             label = item["descripcio"]

@@ -91,6 +91,25 @@ CREATE TABLE IF NOT EXISTS recursos (
     ordre     integer NOT NULL DEFAULT 0
 );
 
+-- Subministres del pis
+CREATE TABLE IF NOT EXISTS subministres (
+    id       uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    nom      text NOT NULL,
+    empresa  text,
+    telefon  text,
+    url      text,
+    notes    text,
+    ordre    integer NOT NULL DEFAULT 0
+);
+
+-- Acords entre famílies
+CREATE TABLE IF NOT EXISTS acords (
+    id     uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    titol  text NOT NULL,
+    text   text NOT NULL,
+    ordre  integer NOT NULL DEFAULT 0
+);
+
 
 -- -------------------------------------------------------------
 -- 2. ROW LEVEL SECURITY (RLS)
@@ -104,6 +123,8 @@ ALTER TABLE checklist_respostes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE tasques             ENABLE ROW LEVEL SECURITY;
 ALTER TABLE avisos              ENABLE ROW LEVEL SECURITY;
 ALTER TABLE recursos            ENABLE ROW LEVEL SECURITY;
+ALTER TABLE subministres        ENABLE ROW LEVEL SECURITY;
+ALTER TABLE acords              ENABLE ROW LEVEL SECURITY;
 
 -- Lectura: qualsevol usuari autenticat pot llegir-ho tot
 DROP POLICY IF EXISTS "usuaris autenticats poden llegir families"            ON families;
@@ -113,7 +134,9 @@ DROP POLICY IF EXISTS "usuaris autenticats poden llegir checklist_items"     ON 
 DROP POLICY IF EXISTS "usuaris autenticats poden llegir checklist_respostes" ON checklist_respostes;
 DROP POLICY IF EXISTS "usuaris autenticats poden llegir tasques"             ON tasques;
 DROP POLICY IF EXISTS "usuaris autenticats poden llegir avisos"              ON avisos;
-DROP POLICY IF EXISTS "usuaris autenticats podem llegir recursos"            ON recursos;
+DROP POLICY IF EXISTS "usuaris autenticats podem llegir recursos"       ON recursos;
+DROP POLICY IF EXISTS "usuaris autenticats poden llegir subministres"   ON subministres;
+DROP POLICY IF EXISTS "usuaris autenticats poden llegir acords"         ON acords;
 
 CREATE POLICY "usuaris autenticats poden llegir families"
     ON families FOR SELECT TO authenticated USING (true);
@@ -138,6 +161,12 @@ CREATE POLICY "usuaris autenticats poden llegir avisos"
 
 CREATE POLICY "usuaris autenticats podem llegir recursos"
     ON recursos FOR SELECT TO authenticated USING (true);
+
+CREATE POLICY "usuaris autenticats poden llegir subministres"
+    ON subministres FOR SELECT TO authenticated USING (true);
+
+CREATE POLICY "usuaris autenticats poden llegir acords"
+    ON acords FOR SELECT TO authenticated USING (true);
 
 -- Estades: cada usuari gestiona les seves
 DROP POLICY IF EXISTS "usuaris poden crear estades"               ON estades;
@@ -176,6 +205,26 @@ CREATE POLICY "usuaris poden escriure tasques"
     ON tasques FOR ALL TO authenticated
     USING (true) WITH CHECK (true);
 
+-- Recursos, subministres, acords: només l'administradora pot escriure
+DROP POLICY IF EXISTS "admins poden gestionar recursos"     ON recursos;
+DROP POLICY IF EXISTS "admins poden gestionar subministres" ON subministres;
+DROP POLICY IF EXISTS "admins poden gestionar acords"       ON acords;
+
+CREATE POLICY "admins poden gestionar recursos"
+    ON recursos FOR ALL TO authenticated
+    USING (EXISTS (SELECT 1 FROM usuaris WHERE id = auth.uid() AND es_admin = true))
+    WITH CHECK (EXISTS (SELECT 1 FROM usuaris WHERE id = auth.uid() AND es_admin = true));
+
+CREATE POLICY "admins poden gestionar subministres"
+    ON subministres FOR ALL TO authenticated
+    USING (EXISTS (SELECT 1 FROM usuaris WHERE id = auth.uid() AND es_admin = true))
+    WITH CHECK (EXISTS (SELECT 1 FROM usuaris WHERE id = auth.uid() AND es_admin = true));
+
+CREATE POLICY "admins poden gestionar acords"
+    ON acords FOR ALL TO authenticated
+    USING (EXISTS (SELECT 1 FROM usuaris WHERE id = auth.uid() AND es_admin = true))
+    WITH CHECK (EXISTS (SELECT 1 FROM usuaris WHERE id = auth.uid() AND es_admin = true));
+
 -- Avisos: qualsevol usuari autenticat pot inserir o modificar
 DROP POLICY IF EXISTS "usuaris poden inserir avisos"   ON avisos;
 DROP POLICY IF EXISTS "usuaris poden modificar avisos" ON avisos;
@@ -193,8 +242,10 @@ CREATE POLICY "usuaris poden modificar avisos"
 -- 3. ÍNDEXS
 -- -------------------------------------------------------------
 
-CREATE INDEX IF NOT EXISTS idx_estades_dates   ON estades (data_inici, data_fi);
-CREATE INDEX IF NOT EXISTS idx_usuaris_email   ON usuaris (email);
-CREATE INDEX IF NOT EXISTS idx_recursos_ordre  ON recursos (ordre);
-CREATE INDEX IF NOT EXISTS idx_checklist_ordre ON checklist_items (ordre);
-CREATE INDEX IF NOT EXISTS idx_estades_familia ON estades (familia_id, data_inici);
+CREATE INDEX IF NOT EXISTS idx_estades_dates      ON estades (data_inici, data_fi);
+CREATE INDEX IF NOT EXISTS idx_usuaris_email      ON usuaris (email);
+CREATE INDEX IF NOT EXISTS idx_recursos_ordre     ON recursos (ordre);
+CREATE INDEX IF NOT EXISTS idx_checklist_ordre    ON checklist_items (ordre);
+CREATE INDEX IF NOT EXISTS idx_estades_familia    ON estades (familia_id, data_inici);
+CREATE INDEX IF NOT EXISTS idx_subministres_ordre ON subministres (ordre);
+CREATE INDEX IF NOT EXISTS idx_acords_ordre       ON acords (ordre);

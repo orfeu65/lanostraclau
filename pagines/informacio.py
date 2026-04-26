@@ -1,71 +1,58 @@
-"""Pàgina d'informació útil."""
+"""Pàgina d'informació útil — dades llegides des de Supabase."""
 import streamlit as st
 from pathlib import Path
-
-
-_DRIVE_URL = "https://drive.google.com/drive/folders/1zHK81pl95dd9CYstHaSTzG8swc_-8Dd0"
-
-_SARFA_PALAMOS_URL = "https://www.moventis.es/ca/consulta-els-horaris-la-nova-estacio-dautobusos-de-palamos"
-_SARFA_URL = "https://www.moventis.es/es/lineas-horarios/linea-autobus-1-aeroport-bcn-barcelona-costa-brava-centre"
-_SARFA_L44_URL = "https://www.moventis.es/ca/linies-horaris/linia-autobus-44-e3-girona-palamos-palafrugell"
-
-_SUBMINISTRES = [
-    ("Aigua",           "Palamós",     "972 061 056", None),
-    ("Gas",             "Naturgy",     "912 100 100", "https://clientes.naturgy.es/"),
-    ("Llum",            "Energia XXI", "800 760 333", "https://www.energiaxxi.com/"),
-    ("Wi-Fi",           "Vinga",       "872 200 700", "https://www.vingafibra.com/ca"),
-    ("Comunitat de propietaris", "—", "—",          None),
-    ("Assegurança",     "AXA",         "91 807 00 55", "https://www.axa.es"),
-    ("Avaries caldera", "Junker",      "972 902 582", None),
-    ("Manteniment A/C", "—",           "—",           None),
-]
-
-_ACORDS = [
-    ("Família Elisa",    "Ús preferent del llit sota la finestra de l'habitació de l'entrada (i els armaris)"),
-    ("Família Cristina", "Ús preferent del llit de l'habitació del fons (i armaris)"),
-]
 
 
 def mostrar(supabase) -> None:
     st.title("ℹ️ Informació útil")
 
-    # --- Drive ---
-    st.subheader("📁 Google Drive")
-    st.markdown(f"[Carpeta compartida (comptabilitat, contractes, documents)]({_DRIVE_URL})")
+    recursos    = _obtenir(supabase, "recursos",    "ordre")
+    subministres = _obtenir(supabase, "subministres", "ordre")
+    acords      = _obtenir(supabase, "acords",      "ordre")
 
-    st.divider()
+    drive     = [r for r in recursos if r["categoria"] == "drive"]
+    transport = [r for r in recursos if r["categoria"] == "transport"]
+
+    # --- Drive ---
+    if drive:
+        st.subheader("📁 Google Drive")
+        for r in drive:
+            st.markdown(f"[{r['titol']}]({r['url']})")
+        st.divider()
 
     # --- Subministres ---
-    st.subheader("📞 Subministres i telèfons d'interès")
-
-    cap1, cap2, cap3 = st.columns([2, 2, 2])
-    cap1.markdown("**Servei**")
-    cap2.markdown("**Empresa**")
-    cap3.markdown("**Telèfon**")
-
-    for servei, empresa, telefon, url in _SUBMINISTRES:
-        c1, c2, c3 = st.columns([2, 2, 2])
-        c1.markdown(servei)
-        if url:
-            c2.markdown(f"[{empresa}]({url})")
-        else:
-            c2.markdown(empresa)
-        c3.markdown(f"`{telefon}`")
-
-    st.divider()
+    if subministres:
+        st.subheader("📞 Subministres i telèfons d'interès")
+        cap1, cap2, cap3 = st.columns([2, 2, 2])
+        cap1.markdown("**Servei**")
+        cap2.markdown("**Empresa**")
+        cap3.markdown("**Telèfon**")
+        for s in subministres:
+            c1, c2, c3 = st.columns([2, 2, 2])
+            nom = s["nom"]
+            if s.get("notes"):
+                nom += f"  \n_{s['notes']}_"
+            c1.markdown(nom)
+            empresa = s.get("empresa") or "—"
+            if s.get("url"):
+                c2.markdown(f"[{empresa}]({s['url']})")
+            else:
+                c2.markdown(empresa)
+            c3.markdown(f"`{s.get('telefon') or '—'}`")
+        st.divider()
 
     # --- Acords ---
-    st.subheader("🤝 Acords entre famílies")
-    for familia, text in _ACORDS:
-        st.markdown(f"**{familia}** — {text}")
+    if acords:
+        st.subheader("🤝 Acords entre famílies")
+        for a in acords:
+            st.markdown(f"**{a['titol']}** — {a['text']}")
+        st.divider()
 
-    st.divider()
-
-    # --- SARFA ---
-    st.subheader("🚌 SARFA")
-    st.markdown(f"[Línies de l'estació de Palamós]({_SARFA_PALAMOS_URL})")
-    st.markdown(f"[Línia 1 · Aeroport BCN – Barcelona – Costa Brava Centre]({_SARFA_URL})")
-    st.markdown(f"[Línia 44 · Girona – Palamós – Palafrugell]({_SARFA_L44_URL})")
+    # --- Transport ---
+    if transport:
+        st.subheader("🚌 Transport")
+        for r in transport:
+            st.markdown(f"[{r['titol']}]({r['url']})")
 
     pdf_path = Path(__file__).parent.parent / "static" / "sarfa.pdf"
     if pdf_path.exists():
@@ -76,3 +63,11 @@ def mostrar(supabase) -> None:
                 file_name="sarfa_horaris.pdf",
                 mime="application/pdf",
             )
+
+
+def _obtenir(supabase, taula: str, ordre: str) -> list:
+    try:
+        return supabase.table(taula).select("*").order(ordre).execute().data or []
+    except Exception as e:
+        st.warning(f"No s'ha pogut carregar {taula}. ({e})")
+        return []

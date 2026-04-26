@@ -172,7 +172,7 @@ def _formulari_editar(supabase, estada, usuari_id, familia_id, es_admin, estades
     # Comprovem si l'usuari pot editar aquesta estada
     pot_editar = es_admin or (estada.get("creada_per") == usuari_id)
 
-    st.subheader(f"Estada de {familia_nom}")
+    st.subheader(f"Estada de la {familia_nom}")
     st.caption(f"Responsable: {responsable}")
 
     if not pot_editar:

@@ -205,6 +205,26 @@ CREATE POLICY "usuaris poden escriure tasques"
     ON tasques FOR ALL TO authenticated
     USING (true) WITH CHECK (true);
 
+-- Families, usuaris, checklist_items: només l'administradora pot escriure
+DROP POLICY IF EXISTS "admins poden gestionar families"        ON families;
+DROP POLICY IF EXISTS "admins poden gestionar usuaris"         ON usuaris;
+DROP POLICY IF EXISTS "admins poden gestionar checklist_items" ON checklist_items;
+
+CREATE POLICY "admins poden gestionar families"
+    ON families FOR ALL TO authenticated
+    USING (EXISTS (SELECT 1 FROM usuaris WHERE id = auth.uid() AND es_admin = true))
+    WITH CHECK (EXISTS (SELECT 1 FROM usuaris WHERE id = auth.uid() AND es_admin = true));
+
+CREATE POLICY "admins poden gestionar usuaris"
+    ON usuaris FOR ALL TO authenticated
+    USING (EXISTS (SELECT 1 FROM usuaris WHERE id = auth.uid() AND es_admin = true))
+    WITH CHECK (EXISTS (SELECT 1 FROM usuaris WHERE id = auth.uid() AND es_admin = true));
+
+CREATE POLICY "admins poden gestionar checklist_items"
+    ON checklist_items FOR ALL TO authenticated
+    USING (EXISTS (SELECT 1 FROM usuaris WHERE id = auth.uid() AND es_admin = true))
+    WITH CHECK (EXISTS (SELECT 1 FROM usuaris WHERE id = auth.uid() AND es_admin = true));
+
 -- Recursos, subministres, acords: només l'administradora pot escriure
 DROP POLICY IF EXISTS "admins poden gestionar recursos"     ON recursos;
 DROP POLICY IF EXISTS "admins poden gestionar subministres" ON subministres;

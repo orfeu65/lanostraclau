@@ -225,7 +225,7 @@ def _formulari_editar(supabase, estada, usuari_id, familia_id, es_admin, estades
 
 def _desar_estada_nova(supabase, usuari_id, familia_id, data_inici, data_fi, comentari) -> None:
     try:
-        supabase.table("estades").insert({
+        res = supabase.table("estades").insert({
             "familia_id":      familia_id,
             "responsable_id":  usuari_id,
             "data_inici":      data_inici.isoformat(),
@@ -235,8 +235,9 @@ def _desar_estada_nova(supabase, usuari_id, familia_id, data_inici, data_fi, com
             "creada_quan":     datetime.now(timezone.utc).isoformat(),
             "modificada_quan": datetime.now(timezone.utc).isoformat(),
         }).execute()
-        st.success("Estada creada.")
-        st.session_state.cal_accio = None
+        nova_id = res.data[0]["id"] if res.data else None
+        st.session_state.cal_accio     = "editar"
+        st.session_state.cal_estada_id = nova_id
         st.rerun()
     except Exception as e:
         st.error(f"Error creant l'estada: {e}")

@@ -37,6 +37,10 @@ streamlit run app.py
 
 [lanostraclau.streamlit.app](https://lanostraclau.streamlit.app)
 
+## Millores pendents
+
+- **Pàgina d'informació en mòbil** — la taula de subministres no es veu bé en pantalla estreta. Solució proposada: HTML/JS que detecta l'amplada i mostra taula al web i expanders al mòbil (~50-60 línies a `informacio.py`).
+
 ## Documentació
 
 - [`docs/requisits.md`](docs/requisits.md) — requisits del projecte

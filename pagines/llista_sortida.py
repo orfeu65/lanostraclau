@@ -71,7 +71,7 @@ def mostrar(supabase) -> None:
     comentari = st.text_area(
         "Comentari",
         value=estada.get("comentari_sortida") or "",
-        placeholder="Notes o incidències d'aquesta estada...",
+        placeholder="Aquest comentari el veurà la propera persona que vingui al pis...",
         height=80,
         label_visibility="collapsed",
     )

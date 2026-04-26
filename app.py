@@ -70,8 +70,8 @@ if sessio:
     supabase.auth.set_session(sessio.access_token, sessio.refresh_token)
 
 # --- App principal (usuari autenticat) ---
-st.sidebar.title("🔑 La Nostra Clau")
-st.sidebar.caption("Del pis de Palamós")
+st.sidebar.title("⚓🔑 La Nostra Clau")
+st.sidebar.caption("del pis de Palamós")
 
 usuari = obtenir_usuari_actual()
 email  = usuari.email if hasattr(usuari, "email") else (usuari or {}).get("email")

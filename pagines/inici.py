@@ -33,7 +33,6 @@ def mostrar(supabase) -> None:
     _mostrar_propera_estada(supabase, avui, usuari)
     _mostrar_darrera_sortida(supabase, avui)
     _mostrar_tauler_avisos(supabase, usuari)
-    _mostrar_accessos_rapids(supabase)
 
 
 # --- Seccions ---
@@ -199,26 +198,6 @@ def _desar_avis(supabase, usuari, avis_actual: dict, nou_text: str) -> None:
     except Exception as e:
         st.error(f"Error desant l'avís: {e}")
 
-
-def _mostrar_accessos_rapids(supabase) -> None:
-    """Mostra els accessos ràpids a recursos externs."""
-    try:
-        res = supabase.table("recursos").select("*").order("ordre").execute()
-        if not res.data:
-            return
-
-        st.subheader("🔗 Accessos ràpids")
-        categories: dict[str, list] = {}
-        for rec in res.data:
-            cat = rec.get("categoria", "Altres")
-            categories.setdefault(cat, []).append(rec)
-
-        for categoria, recursos in categories.items():
-            st.caption(categoria)
-            for rec in recursos:
-                st.markdown(f"[{rec['titol']}]({rec['url']})")
-    except Exception as e:
-        st.warning(f"No s'ha pogut carregar els accessos ràpids. ({e})")
 
 
 # --- Utilitats ---

@@ -67,7 +67,7 @@ Permet veure i gestionar les estades al pis.
 
 Una llista de comprovació que el responsable de l'estada ha d'emplenar abans de marxar del pis.
 
-- La llista és **sempre la mateixa** (editable en versions futures des de la pàgina d'administració).
+- La llista és **sempre la mateixa** (editable per l'administradora des de la pàgina d'administració).
 - Els ítems estan organitzats en **seccions** (per exemple: "Unes hores abans de marxar" / "Just al marxar").
 - Cada ítem pot ser **obligatori** o **opcional**.
 - Hi ha un **comentari general** únic per a tota la llista de sortida d'aquella estada (es desa a l'estada).
@@ -105,7 +105,8 @@ Pàgina amb recursos i informació d'interès:
 - Gestió d'usuaris: crear, editar, desactivar comptes.
 - Assignació d'usuaris a famílies.
 - Editar o eliminar estades de qualsevol família.
-- Futur: editar la llista de comprovació de sortida.
+- Editar la llista de comprovació de sortida (ítems, seccions, ordre).
+- Gestió de famílies, subministres, acords i recursos d'informació.
 
 ---
 

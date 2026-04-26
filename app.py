@@ -71,7 +71,7 @@ if sessio:
 
 # --- App principal (usuari autenticat) ---
 st.sidebar.title("🔑 La Nostra Clau")
-st.sidebar.caption("Pis de Palamós")
+st.sidebar.caption("Del pis de Palamós")
 
 pagines = {
     "Inici":             "pagines.inici",

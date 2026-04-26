@@ -110,11 +110,7 @@ def mostrar(supabase) -> None:
     accio = st.session_state.cal_accio
 
     if accio == "crear":
-        if es_admin:
-            _formulari_crear(supabase, usuari_id, familia_id, estades)
-        else:
-            st.info("Només l'administradora pot crear estades.")
-            st.session_state.cal_accio = None
+        _formulari_crear(supabase, usuari_id, familia_id, estades)
 
     elif accio == "editar" and st.session_state.cal_estada_id:
         estada = next((e for e in estades if e["id"] == st.session_state.cal_estada_id), None)

@@ -98,7 +98,7 @@ def _mostrar_propera_estada(supabase, avui: str, usuari) -> None:
             .execute()
         )
 
-        st.subheader("📅 La teva propera estada")
+        st.subheader("🏖️ La teva propera estada")
         if res.data:
             estada = res.data[0]
             responsable = estada.get("usuaris") or {}
@@ -136,7 +136,7 @@ def _mostrar_darrera_sortida(supabase, avui: str) -> None:
         if darrera:
             est = darrera["estada"]
             familia = est.get("families") or {}
-            st.subheader("Darrera sortida")
+            st.subheader("📅 La darrera sortida")
             st.markdown(
                 f"**{familia.get('nom', '—')}** · {_formata_data(est['data_fi'])}  \n"
                 f"_{darrera['comentari']}_"

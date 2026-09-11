@@ -109,15 +109,16 @@ def mostrar(supabase) -> None:
 
     accio = st.session_state.cal_accio
 
-    if accio == "crear":
-        _formulari_crear(supabase, usuari_id, familia_id, estades)
-
-    elif accio == "editar" and st.session_state.cal_estada_id:
+    if accio == "editar" and st.session_state.cal_estada_id:
         estada = next((e for e in estades if e["id"] == st.session_state.cal_estada_id), None)
         if estada:
             _formulari_editar(supabase, estada, usuari_id, familia_id, es_admin, estades)
         else:
             st.session_state.cal_accio = None
+            _formulari_crear(supabase, usuari_id, familia_id, estades)
+
+    else:
+        _formulari_crear(supabase, usuari_id, familia_id, estades)
 
 
 # --- Formularis ---

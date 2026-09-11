@@ -115,17 +115,43 @@ def mostrar(supabase) -> None:
             _formulari_editar(supabase, estada, usuari_id, familia_id, es_admin, estades)
         else:
             st.session_state.cal_accio = None
-            _formulari_crear(supabase, usuari_id, familia_id, estades)
+            _formulari_crear(supabase, usuari_id, familia_id, es_admin, estades)
 
     else:
-        _formulari_crear(supabase, usuari_id, familia_id, estades)
+        _formulari_crear(supabase, usuari_id, familia_id, es_admin, estades)
 
 
 # --- Formularis ---
 
-def _formulari_crear(supabase, usuari_id, familia_id, estades) -> None:
+def _formulari_crear(supabase, usuari_id, familia_id, es_admin, estades) -> None:
     """Formulari per crear una nova estada."""
     st.subheader("Nova estada")
+
+    familia_sel_id     = familia_id
+    responsable_sel_id = usuari_id
+
+    if es_admin:
+        families = _obtenir_families(supabase)
+        usuaris  = _obtenir_usuaris(supabase)
+
+        familia_opcions = {f["nom"]: f["id"] for f in families}
+        noms_familia = list(familia_opcions.keys())
+        if noms_familia:
+            idx_familia = next(
+                (i for i, nom in enumerate(noms_familia) if familia_opcions[nom] == familia_id), 0
+            )
+            familia_sel_nom = st.selectbox("Família", noms_familia, index=idx_familia, key="cal_nova_familia")
+            familia_sel_id  = familia_opcions[familia_sel_nom]
+
+        usuaris_familia = [u for u in usuaris if u.get("familia_id") == familia_sel_id] or usuaris
+        usuari_opcions = {u["nom"]: u["id"] for u in usuaris_familia}
+        noms_usuari = list(usuari_opcions.keys())
+        if noms_usuari:
+            idx_usuari = next(
+                (i for i, nom in enumerate(noms_usuari) if usuari_opcions[nom] == usuari_id), 0
+            )
+            responsable_sel_nom = st.selectbox("Responsable", noms_usuari, index=idx_usuari, key="cal_nou_responsable")
+            responsable_sel_id  = usuari_opcions[responsable_sel_nom]
 
     inici_default = date.fromisoformat(st.session_state.cal_inici) if st.session_state.cal_inici else date.today()
     fi_default    = date.fromisoformat(st.session_state.cal_fi)    if st.session_state.cal_fi    else date.today()
@@ -151,7 +177,7 @@ def _formulari_crear(supabase, usuari_id, familia_id, estades) -> None:
     if enviat:
         if data_fi < data_inici:
             st.error("La data de fi no pot ser anterior a la d'inici.")
-        elif not usuari_id or not familia_id:
+        elif not responsable_sel_id or not familia_sel_id:
             st.error("No s'ha pogut identificar l'usuari o la família.")
         else:
             solapament = _comprova_solapament(estades, data_inici, data_fi)
@@ -162,7 +188,9 @@ def _formulari_crear(supabase, usuari_id, familia_id, estades) -> None:
                     f"({_fmt(solapament['data_inici'])} — {_fmt(solapament['data_fi'])})."
                 )
             else:
-                _desar_estada_nova(supabase, usuari_id, familia_id, data_inici, data_fi, comentari)
+                _desar_estada_nova(
+                    supabase, usuari_id, familia_sel_id, responsable_sel_id, data_inici, data_fi, comentari
+                )
 
 
 def _formulari_editar(supabase, estada, usuari_id, familia_id, es_admin, estades) -> None:
@@ -224,11 +252,11 @@ def _formulari_editar(supabase, estada, usuari_id, familia_id, es_admin, estades
 
 # --- Operacions de base de dades ---
 
-def _desar_estada_nova(supabase, usuari_id, familia_id, data_inici, data_fi, comentari) -> None:
+def _desar_estada_nova(supabase, usuari_id, familia_id, responsable_id, data_inici, data_fi, comentari) -> None:
     try:
         res = supabase.table("estades").insert({
             "familia_id":      familia_id,
-            "responsable_id":  usuari_id,
+            "responsable_id":  responsable_id,
             "data_inici":      data_inici.isoformat(),
             "data_fi":         data_fi.isoformat(),
             "comentari":       comentari or None,
@@ -279,6 +307,22 @@ def _obtenir_estades(supabase) -> list:
             .order("data_inici")
             .execute()
         )
+        return res.data or []
+    except Exception:
+        return []
+
+
+def _obtenir_families(supabase) -> list:
+    try:
+        res = supabase.table("families").select("id, nom").order("nom").execute()
+        return res.data or []
+    except Exception:
+        return []
+
+
+def _obtenir_usuaris(supabase) -> list:
+    try:
+        res = supabase.table("usuaris").select("id, nom, familia_id").order("nom").execute()
         return res.data or []
     except Exception:
         return []

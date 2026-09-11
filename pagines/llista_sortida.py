@@ -17,7 +17,7 @@ def mostrar(supabase) -> None:
     estada = _obtenir_estada_rellevant(supabase, familia_id)
 
     if not estada:
-        st.info("La llista de sortida s'omple el dia que marxes. No tens cap estada que finalitzi avui o en els darrers 3 dies.")
+        st.info("La llista de sortida es mostra des del primer dia de l'estada fins a 3 dies després de marxar. No tens cap estada dins d'aquest període.")
         return
 
     st.caption(f"Estada: {_formata_data(estada['data_inici'])} — {_formata_data(estada['data_fi'])}")
@@ -129,14 +129,14 @@ def _desar_respostes(supabase, estada, items, marcats, comentari, usuari_id) -> 
 
 def _obtenir_estada_rellevant(supabase, familia_id: str) -> Optional[dict]:
     avui = date.today().isoformat()
-    tres_dies = (date.today() - timedelta(days=3)).isoformat()
+    marge_final = (date.today() - timedelta(days=3)).isoformat()
     try:
         res = (
             supabase.table("estades")
             .select("*")
             .eq("familia_id", familia_id)
-            .gte("data_fi", tres_dies)
-            .lte("data_fi", avui)
+            .lte("data_inici", avui)
+            .gte("data_fi", marge_final)
             .order("data_fi", desc=True)
             .limit(1)
             .execute()
